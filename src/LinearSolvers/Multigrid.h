@@ -210,31 +210,30 @@ namespace ippl {
                 cg_m(lhs, rhs , cg_params);
             }
             else{
+                rhs_type residual(meshes_m[level] , layouts_m[level]);
+                lhs_type restricted_lhs(meshes_m[level+1] , layouts_m[level+1]);
+                rhs_type restricted_residual(meshes_m[level+1] , layouts_m[level+1]);
+                lhs_type prolongated_lhs(meshes_m[level] , layouts_m[level]);
+
+                restricted_lhs = 0;
+                residual.setFieldBC(bc_m);
+                restricted_lhs.setFieldBC(bc_m);
+
                 // Pre-smoothening
                 gauss_seidel_sweep(lhs,rhs);
 
                 //Compute Residual
-                rhs_type residual(meshes_m[level] , layouts_m[level]);
-                residual.setFieldBC(bc_m);
                 residual = rhs - op_m(lhs);
 
                 // Restrict to coarser grid
-                rhs_type restricted_residual(meshes_m[level+1] , layouts_m[level+1]);
                 restricted_residual = restrict(residual,level+1);
-
-                lhs_type restricted_lhs(meshes_m[level+1] , layouts_m[level+1]);
-                restricted_lhs = 0;
-                restricted_lhs.setFieldBC(bc_m);
 
                 // Recursive Call
                 recursive_step(restricted_lhs , restricted_residual, level+1);
-                // Prolongation
 
-                lhs_type prolongated_lhs(meshes_m[level] , layouts_m[level]);
+                // Prolongation
                 prolongated_lhs = prolongate(restricted_lhs , level);
-                lhs_type res(meshes_m[level] , layouts_m[level]);
                 lhs = lhs + prolongated_lhs;
-                res = rhs - op_m(lhs);
 
                 //Post-smoothening
                 gauss_seidel_sweep(lhs,rhs);
@@ -304,10 +303,12 @@ namespace ippl {
         }
 
         void gauss_seidel_sweep(FieldLHS& x , const FieldRHS &b){
-            Field r = b.deepCopy();
-            Field r_inner = b.deepCopy();
-            Field L = b.deepCopy();
-            Field U = b.deepCopy();
+            mesh_type& mesh = x.get_mesh();
+            layout_type& layout = x.getLayout();
+            lhs_type r(mesh, layout);
+            lhs_type r_inner(mesh, layout);
+            lhs_type L(mesh, layout);
+            lhs_type U(mesh, layout);
             r_inner.setFieldBC(bc_m);
             for (unsigned int k=0; k<outerloops_m;++k) {
                 U = -upper_laplace(x);
