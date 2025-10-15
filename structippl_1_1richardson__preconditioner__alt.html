@@ -183,7 +183,7 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename <a class="el" href="classippl_1_1Field.html">Field</a>, typename OperatorF, typename InvDiagF&gt;<br />
-struct ippl::richardson_preconditioner_alt&lt; Field, OperatorF, InvDiagF &gt;</div><p >Alternative Richardson preconditioner Given the linear system of equations Ax=b the update steps are performed as follows: x_{k+1} = x_k + D^{-1}(Ax -b) A derivation of this preconditioner can be found at: <a href="https://jschoeberl.github.io/iFEM/iterative/preconditioning.html">https://jschoeberl.github.io/iFEM/iterative/preconditioning.html</a> </p>
+struct ippl::richardson_preconditioner_alt&lt; Field, OperatorF, InvDiagF &gt;</div><p >Alternative Richardson preconditioner Given the linear system of equations Ax=b the update steps are performed as follows: x_{k+1} = x_k + D^{-1}(b-Ax_k) A derivation of this preconditioner can be found at: <a href="https://jschoeberl.github.io/iFEM/iterative/preconditioning.html">https://jschoeberl.github.io/iFEM/iterative/preconditioning.html</a> </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="add794919f9c3f3bb4cb60c581c514acb" name="add794919f9c3f3bb4cb60c581c514acb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#add794919f9c3f3bb4cb60c581c514acb">&#9670;&#160;</a></span>layout_type</h2>
