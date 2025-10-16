@@ -411,7 +411,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -555,7 +555,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax_lower", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -703,7 +703,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax_upper", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -851,7 +851,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax_upperlower", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -994,7 +994,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax_inversediag", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -1130,7 +1130,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax_diag", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -1246,7 +1246,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements Ax_lift", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(const size_t index) {
                 const size_t elementIndex                            = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dof = this->getLocalDOFIndices();
@@ -1359,7 +1359,7 @@ namespace ippl {
 
         // Loop over elements to compute contributions
         Kokkos::parallel_for(
-            "Loop over elements", policy_type(0, elementIndices.extent(0)),
+            "Loop over elements LoadVector", policy_type(0, elementIndices.extent(0)),
             KOKKOS_CLASS_LAMBDA(size_t index) {
                 const size_t elementIndex                              = elementIndices(index);
                 const Vector<size_t, numElementDOFs> local_dofs  = this->getLocalDOFIndices();
