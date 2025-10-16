@@ -488,7 +488,7 @@ $(function() {
 <div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span> </div>
 <div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>            <span class="stringliteral">&quot;Loop over elements Ax&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -632,7 +632,7 @@ $(function() {
 <div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span> </div>
 <div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>            <span class="stringliteral">&quot;Loop over elements Ax_lower&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -780,7 +780,7 @@ $(function() {
 <div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span> </div>
 <div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>            <span class="stringliteral">&quot;Loop over elements Ax_upper&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -928,7 +928,7 @@ $(function() {
 <div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span> </div>
 <div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>            <span class="stringliteral">&quot;Loop over elements Ax_upperlower&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -1071,7 +1071,7 @@ $(function() {
 <div class="line"><a id="l00994" name="l00994"></a><span class="lineno">  994</span> </div>
 <div class="line"><a id="l00995" name="l00995"></a><span class="lineno">  995</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l00996" name="l00996"></a><span class="lineno">  996</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l00997" name="l00997"></a><span class="lineno">  997</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l00997" name="l00997"></a><span class="lineno">  997</span>            <span class="stringliteral">&quot;Loop over elements Ax_inversediag&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l00998" name="l00998"></a><span class="lineno">  998</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l00999" name="l00999"></a><span class="lineno">  999</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l01000" name="l01000"></a><span class="lineno"> 1000</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -1207,7 +1207,7 @@ $(function() {
 <div class="line"><a id="l01130" name="l01130"></a><span class="lineno"> 1130</span> </div>
 <div class="line"><a id="l01131" name="l01131"></a><span class="lineno"> 1131</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l01132" name="l01132"></a><span class="lineno"> 1132</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l01133" name="l01133"></a><span class="lineno"> 1133</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l01133" name="l01133"></a><span class="lineno"> 1133</span>            <span class="stringliteral">&quot;Loop over elements Ax_diag&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l01134" name="l01134"></a><span class="lineno"> 1134</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l01135" name="l01135"></a><span class="lineno"> 1135</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l01136" name="l01136"></a><span class="lineno"> 1136</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -1323,7 +1323,7 @@ $(function() {
 <div class="line"><a id="l01246" name="l01246"></a><span class="lineno"> 1246</span> </div>
 <div class="line"><a id="l01247" name="l01247"></a><span class="lineno"> 1247</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l01248" name="l01248"></a><span class="lineno"> 1248</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l01249" name="l01249"></a><span class="lineno"> 1249</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l01249" name="l01249"></a><span class="lineno"> 1249</span>            <span class="stringliteral">&quot;Loop over elements Ax_lift&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l01250" name="l01250"></a><span class="lineno"> 1250</span>            KOKKOS_CLASS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l01251" name="l01251"></a><span class="lineno"> 1251</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                            = elementIndices(index);</div>
 <div class="line"><a id="l01252" name="l01252"></a><span class="lineno"> 1252</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dof = this-&gt;getLocalDOFIndices();</div>
@@ -1436,7 +1436,7 @@ $(function() {
 <div class="line"><a id="l01359" name="l01359"></a><span class="lineno"> 1359</span> </div>
 <div class="line"><a id="l01360" name="l01360"></a><span class="lineno"> 1360</span>        <span class="comment">// Loop over elements to compute contributions</span></div>
 <div class="line"><a id="l01361" name="l01361"></a><span class="lineno"> 1361</span>        Kokkos::parallel_for(</div>
-<div class="line"><a id="l01362" name="l01362"></a><span class="lineno"> 1362</span>            <span class="stringliteral">&quot;Loop over elements&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
+<div class="line"><a id="l01362" name="l01362"></a><span class="lineno"> 1362</span>            <span class="stringliteral">&quot;Loop over elements LoadVector&quot;</span>, policy_type(0, elementIndices.extent(0)),</div>
 <div class="line"><a id="l01363" name="l01363"></a><span class="lineno"> 1363</span>            KOKKOS_CLASS_LAMBDA(<span class="keywordtype">size_t</span> index) {</div>
 <div class="line"><a id="l01364" name="l01364"></a><span class="lineno"> 1364</span>                <span class="keyword">const</span> <span class="keywordtype">size_t</span> elementIndex                              = elementIndices(index);</div>
 <div class="line"><a id="l01365" name="l01365"></a><span class="lineno"> 1365</span>                <span class="keyword">const</span> <a class="code hl_class" href="classippl_1_1Vector.html">Vector&lt;size_t, numElementDOFs&gt;</a> local_dofs  = this-&gt;getLocalDOFIndices();</div>
