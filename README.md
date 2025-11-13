@@ -40,7 +40,7 @@ Check out the latest [results](https://ippl-bc4558.pages.jsc.fz-juelich.de/)
 # Installing IPPL and its dependencies
 
 All the new developments of IPPL are merged into the `master` branch which can make it potentially unstable from time to time. So if you want a stable and more tested version
-please checkout the tagged branch correspodning to the latest release (e.g. `git checkout tags/IPPL-x.x.x`). Otherwise if you want the latest developments go with the master with the above caveat in mind.
+please checkout the tagged branch corresponding to the latest release (e.g. `git checkout tags/IPPL-x.x.x`). Otherwise if you want the latest developments go with the master with the above caveat in mind.
 
 ## Requirements
 
@@ -62,7 +62,7 @@ cmake <src_dir> -D<option>=<value>
 The relevant options of IPPL are
 - IPPL_PLATFORMS, can be one of `SERIAL, OPENMP, CUDA, "OPENMP;CUDA"`, default `SERIAL`
 - `Kokkos_VERSION`, default `4.5.00` 
-- `Heffte_VERSION`, default `4.7.1`
+- `Heffte_VERSION`, default `2.4.0`
   - If set to `MASTER`, an additional flag `Heffte_COMMIT_HASH` can be set, default `9eab7c0eb18e86acaccc2b5699b30e85a9e7bdda`
   - Currently, this is the only compatible commit of Heffte
 - `IPPL_DYL`, default `OFF`
@@ -120,7 +120,7 @@ This will set the following variables automatically (exact values may change ove
 ```
 Users are encouraged to define additional sets of flags and create presets for them.
 
-#### Serial debug build with tests and newest Kokkos
+#### Serial debug build with tests and a Kokkos version
 ```
 cmake .. \
     -DCMAKE_BUILD_TYPE=Debug \
@@ -145,6 +145,7 @@ cmake .. \
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DKokkos_ARCH_[architecture]=ON \
+    -DCMAKE_CUDA_ARCHITECTURES=<architecture compute capability> \
     -DCMAKE_CXX_STANDARD=20 \
     -DIPPL_ENABLE_FFT=ON \
     -DIPPL_ENABLE_TESTS=ON \
