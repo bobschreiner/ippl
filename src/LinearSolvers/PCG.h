@@ -460,7 +460,7 @@ namespace ippl {
             }
 
             r = rhs - this->op_m(lhs);
-            d = preconditioner_m->operator()(r);
+            d = preconditioner_m->operator()(r).deepCopy();
             d.setFieldBC(bc);
 
             T delta1          = innerProduct(r, d);
