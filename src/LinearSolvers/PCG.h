@@ -469,7 +469,8 @@ namespace ippl {
             const T tolerance = params.get<T>("tolerance") * this->residueNorm;
 
             while (this->iterations_m < maxIterations && this->residueNorm > tolerance) {
-                q       = this->op_m(d);
+
+                q       = this->op_m(d).deepCopy();
                 T alpha = delta1 / innerProduct(d, q);
                 lhs     = lhs + alpha * d;
 
@@ -481,7 +482,7 @@ namespace ippl {
                 // in some implementations, the correction may be applied every few
                 // iterations to offset accumulated floating point errors
                 r = r - alpha * q;
-                s = preconditioner_m->operator()(r);
+                s = preconditioner_m->operator()(r).deepCopy();
 
                 delta0 = delta1;
                 delta1 = innerProduct(r, s);

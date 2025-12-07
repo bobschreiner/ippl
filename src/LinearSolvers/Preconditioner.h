@@ -296,13 +296,10 @@ namespace ippl {
         }
 
         Field operator()(Field& r) override {
-            mesh_type& mesh     = r.get_mesh();
-            layout_type& layout = r.getLayout();
-            Field g(mesh, layout);
 
             g = 0;
             for (unsigned int j = 0; j < innerloops_m; ++j) {
-                ULg_m = upper_and_lower_m(g);
+                ULg_m = upper_and_lower_m(g).deepCopy();
                 g     = r - ULg_m;
          
                 // The inverse diagonal is applied to the
@@ -315,9 +312,10 @@ namespace ippl {
                 if constexpr (std::is_same_v<InvDiagF, std::function<double(Field)>>) {
                     g = inverse_diagonal_m(g) * g;
                 } else {
-                    g = inverse_diagonal_m(g);
+                    g = inverse_diagonal_m(g).deepCopy();
                 }
             }
+
             return g;
         }
 
@@ -325,6 +323,7 @@ namespace ippl {
             layout_type& layout = b.getLayout();
             mesh_type& mesh     = b.get_mesh();
 
+            g = Field(mesh, layout);
             ULg_m = Field(mesh, layout);
         }
 
@@ -333,6 +332,7 @@ namespace ippl {
         InvDiagF inverse_diagonal_m;
         unsigned innerloops_m;
         Field ULg_m;
+        Field g;
     };
 
     /*!
