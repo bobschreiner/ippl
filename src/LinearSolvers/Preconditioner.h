@@ -154,7 +154,7 @@ namespace ippl {
             Field Pr(mesh, layout);
 
             Pr   = recursive_preconditioner(u, level - 1);
-            PAPr = op_m(Pr);
+            PAPr = op_m(Pr).deepCopy();
             PAPr = recursive_preconditioner(PAPr, level - 1);
             res  = eta_m[level] * (2.0 * Pr - PAPr);
             return res;
@@ -246,7 +246,7 @@ namespace ippl {
             res = r.deepCopy();
 
             x_old = r / theta_m;
-            A     = op_m(r);
+            A     = op_m(r).deepCopy();
             x     = 2.0 * rho_m[1] / delta_m * (2.0 * r - A / theta_m);
 
             if (degree_m == 0) {
@@ -257,7 +257,7 @@ namespace ippl {
                 return x;
             }
             for (unsigned int i = 2; i < degree_m + 1; ++i) {
-                A     = op_m(x);
+                A     = op_m(x).deepCopy();
                 z     = 2.0 / delta_m * (r - A);
                 res   = rho_m[i] * (2 * sigma_m * x - rho_m[i - 1] * x_old + z);
                 x_old = x.deepCopy();
@@ -357,15 +357,11 @@ namespace ippl {
         }
 
         Field operator()(Field& r) override {
-            mesh_type& mesh     = r.get_mesh();
-            layout_type& layout = r.getLayout();
-            Field g(mesh, layout);
-            Field g_old(mesh, layout);
+
             g = 0;
             g_old = 0;
-
             for (unsigned int j = 0; j < innerloops_m; ++j) {
-                Ag_m = op_m(g);
+                Ag_m = op_m(g).deepCopy();
                 g     = r - Ag_m;
 
                 // The inverse diagonal is applied to the
@@ -388,8 +384,9 @@ namespace ippl {
         void init_fields(Field& b) override {
             layout_type& layout = b.getLayout();
             mesh_type& mesh     = b.get_mesh();
-
             Ag_m = Field(mesh, layout);
+            g = Field(mesh, layout);
+            g_old = Field(mesh, layout);
         }
 
     protected:
@@ -397,6 +394,8 @@ namespace ippl {
         InvDiagF inverse_diagonal_m;
         unsigned innerloops_m;
         Field Ag_m;
+        Field g;
+        Field g_old;
     };
 
     /*!
@@ -419,18 +418,13 @@ namespace ippl {
         }
 
         Field operator()(Field& b) override {
-            layout_type& layout = b.getLayout();
-            mesh_type& mesh     = b.get_mesh();
-
-            Field x(mesh, layout);
 
             x = 0;  // Initial guess
-
             for (unsigned int k = 0; k < outerloops_m; ++k) {
-                UL_m = upper_m(x);
+                UL_m = upper_m(x).deepCopy();
                 r_m  = b - UL_m;
                 for (unsigned int j = 0; j < innerloops_m; ++j) {
-                    UL_m = lower_m(x);
+                    UL_m = lower_m(x).deepCopy();
                     x    = r_m - UL_m;
                     // The inverse diagonal is applied to the
                     // vector itself to return the result usually.
@@ -442,13 +436,13 @@ namespace ippl {
                     if constexpr (std::is_same_v<InvDiagF, std::function<double(Field)>>) {
                         x = inverse_diagonal_m(x) * x;
                     } else {
-                        x = inverse_diagonal_m(x);
+                        x = inverse_diagonal_m(x).deepCopy();
                     }
                 }
-                UL_m = lower_m(x);
+                UL_m = lower_m(x).deepCopy();
                 r_m  = b - UL_m;
                 for (unsigned int j = 0; j < innerloops_m; ++j) {
-                    UL_m = upper_m(x);
+                    UL_m = upper_m(x).deepCopy();
                     x    = r_m - UL_m;
                     // The inverse diagonal is applied to the
                     // vector itself to return the result usually.
@@ -460,7 +454,7 @@ namespace ippl {
                     if constexpr (std::is_same_v<InvDiagF, std::function<double(Field)>>) {
                         x = inverse_diagonal_m(x) * x;
                     } else {
-                        x = inverse_diagonal_m(x);
+                        x = inverse_diagonal_m(x).deepCopy();
                     }
                 }
             }
@@ -473,6 +467,7 @@ namespace ippl {
 
             UL_m = Field(mesh, layout);
             r_m  = Field(mesh, layout);
+            x = Field(mesh, layout);
         }
 
     protected:
@@ -483,11 +478,13 @@ namespace ippl {
         unsigned outerloops_m;
         Field UL_m;
         Field r_m;
+        Field x;
     };
 
     /*!
      * Symmetric successive over-relaxation
      */
+    // TODO : Check why ssor is worse than gauss-seidel with TESTNONhomDirichlet
     template <typename Field, typename LowerF, typename UpperF, typename InvDiagF, typename DiagF>
     struct ssor_preconditioner : public preconditioner<Field> {
         constexpr static unsigned Dim = Field::dim;
@@ -512,12 +509,6 @@ namespace ippl {
             IpplTimings::startTimer(initTimer);
 
             double D;
-
-            layout_type& layout = b.getLayout();
-            mesh_type& mesh     = b.get_mesh();
-
-            Field x(mesh, layout);
-
             x = 0;  // Initial guess
 
             IpplTimings::stopTimer(initTimer);
@@ -534,38 +525,38 @@ namespace ippl {
             // the two cases.
             for (unsigned int k = 0; k < outerloops_m; ++k) {
                 if constexpr (std::is_same_v<InvDiagF, std::function<double(Field)>>) {
-                    UL_m = upper_m(x);
-                    D    = diagonal_m(x);
+                    UL_m = upper_m(x).deepCopy();
+                    D    = diagonal_m(x).deepCopy();
                     r_m  = omega_m * (b - UL_m) + (1.0 - omega_m) * D * x;
 
                     for (unsigned int j = 0; j < innerloops_m; ++j) {
-                        UL_m = lower_m(x);
+                        UL_m = lower_m(x).deepCopy();
                         x    = r_m - omega_m * UL_m;
                         x    = inverse_diagonal_m(x) * x;
                     }
-                    UL_m = lower_m(x);
-                    D    = diagonal_m(x);
+                    UL_m = lower_m(x).deepCopy();
+                    D    = diagonal_m(x).deepCopy();
                     r_m  = omega_m * (b - UL_m) + (1.0 - omega_m) * D * x;
                     for (unsigned int j = 0; j < innerloops_m; ++j) {
-                        UL_m = upper_m(x);
+                        UL_m = upper_m(x).deepCopy();
                         x    = r_m - omega_m * UL_m;
                         x    = inverse_diagonal_m(x) * x;
                     }
                 } else {
-                    UL_m = upper_m(x);
+                    UL_m = upper_m(x).deepCopy();
                     r_m  = omega_m * (b - UL_m) + (1.0 - omega_m) * diagonal_m(x);
 
                     for (unsigned int j = 0; j < innerloops_m; ++j) {
-                        UL_m = lower_m(x);
+                        UL_m = lower_m(x).deepCopy();
                         x    = r_m - omega_m * UL_m;
-                        x    = inverse_diagonal_m(x);
+                        x    = inverse_diagonal_m(x).deepCopy();
                     }
-                    UL_m = lower_m(x);
+                    UL_m = lower_m(x).deepCopy();
                     r_m  = omega_m * (b - UL_m) + (1.0 - omega_m) * diagonal_m(x);
                     for (unsigned int j = 0; j < innerloops_m; ++j) {
-                        UL_m = upper_m(x);
+                        UL_m = upper_m(x).deepCopy();
                         x    = r_m - omega_m * UL_m;
-                        x    = inverse_diagonal_m(x);
+                        x    = inverse_diagonal_m(x).deepCopy();
                     }
                 }
             }
@@ -579,6 +570,7 @@ namespace ippl {
 
             UL_m = Field(mesh, layout);
             r_m  = Field(mesh, layout);
+            x = Field(mesh, layout);
         }
 
     protected:
@@ -591,6 +583,7 @@ namespace ippl {
         double omega_m;
         Field UL_m;
         Field r_m;
+        Field x;
     };
 
     /*!

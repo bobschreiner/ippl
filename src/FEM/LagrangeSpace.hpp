@@ -894,7 +894,11 @@ namespace ippl {
                         I_nd[d] = I_nd[d] - ldom[d].first() + nghost;
                     }
 
-                    for (j = 0; j < i; ++j) {
+                    // TODO : iterate j from 0 -> i instead and do not check the diagonal
+                    for (j = 0; j < numElementDOFs; ++j) {
+                        if (i == j) {
+                            continue;
+                        }
                         J_nd = global_dof_ndindices[j];
 
                         // Skip boundary DOFs (Zero & Constant Dirichlet BCs)
@@ -909,7 +913,8 @@ namespace ippl {
                         }
 
                         apply(resultView, I_nd) += A_K[i][j] * apply(view, J_nd);
-                        apply(resultView, J_nd) += A_K[j][i] * apply(view, I_nd);
+                        // TODO: When iterating j from 0 -> i uncomment this line
+                        // apply(resultView, J_nd) += A_K[j][i] * apply(view, I_nd);
                     }
                 }
             });

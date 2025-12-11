@@ -249,10 +249,10 @@ namespace ippl {
          * @return Iteration count of last solve
          */
         virtual int getIterationCount() { return iterations_m; }
-        
+
         virtual void operator()(lhs_type& lhs, rhs_type& rhs,
                                 const ParameterList& params) override {
-            
+
             //constexpr unsigned Dim             = lhs_type::dim;
             //typename lhs_type::Mesh_t& mesh     = lhs.get_mesh();
             //typename lhs_type::Layout_t& layout = lhs.getLayout();
@@ -266,8 +266,8 @@ namespace ippl {
             r = 0;
             lhs_type d = lhs.deepCopy();
             d = 0;
-            
-           
+
+
             r = rhs - op_m(lhs);
             r.setHalo(0);
             d = r; //.deepCopy();
@@ -279,7 +279,7 @@ namespace ippl {
 
             lhs_type q = lhs.deepCopy();
             q = 0;
-            
+
 
             while (iterations_m < maxIterations && residueNorm > tolerance) {
                 q = op_m(d);
@@ -304,7 +304,6 @@ namespace ippl {
                 d           = r + beta * d;
                 ++iterations_m;
 
-                
             }
         }
 
@@ -333,6 +332,8 @@ namespace ippl {
         using UpperLowerF  = std::function<UpperLowerRet(lhs_type)>;
         using InverseDiagF = std::function<InverseDiagRet(lhs_type)>;
         using DiagF        = std::function<DiagRet(lhs_type)>;
+        using mesh_type    = typename lhs_type::Mesh_t;
+        using layout_type  = typename lhs_type::Layout_t;
 
         PCG()
             : CG<OperatorRet, LowerRet, UpperRet, UpperLowerRet, InverseDiagRet, DiagRet, FieldLHS,
@@ -365,7 +366,7 @@ namespace ippl {
             // set in main
             double omega = 1.57079632679  // This is a dummy default parameter, actual default
             // parameter should be set in main
-            // default = pi/2 as this was found optimal during hyperparameter scan for test case 
+            // default = pi/2 as this was found optimal during hyperparameter scan for test case
             // (see https://amas.web.psi.ch/people/aadelmann/ETH-Accel-Lecture-1/projectscompleted/cse/BSc-mbolliger.pdf)
             ) override {
             if (preconditioner_type == "jacobi") {
@@ -414,6 +415,19 @@ namespace ippl {
             }
         }
 
+         /*
+         * Initializes the fields needed for CG operations
+         * and avoids allocating them at each solve step.
+         * @param mesh The mesh to initialize the field with
+         * @param layout The layout to initialize the field with
+         */
+        void initializeFields(mesh_type& mesh, layout_type& layout) override {
+            r.initialize(mesh, layout);
+            d.initialize(mesh, layout);
+            q.initialize(mesh, layout);
+            s.initialize(mesh, layout);
+        }
+
         void operator()(lhs_type& lhs, rhs_type& rhs, const ParameterList& params) override {
             constexpr unsigned Dim = lhs_type::dim;
 
@@ -422,19 +436,16 @@ namespace ippl {
                                     "Preconditioner has not been set for PCG solver");
             }
 
-            typename lhs_type::Mesh_t& mesh     = lhs.get_mesh();
-            typename lhs_type::Layout_t& layout = lhs.getLayout();
 
             this->iterations_m      = 0;
             const int maxIterations = params.get<int>("max_iterations");
 
-            // Variable names mostly based on description in
-            // https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
-            lhs_type r(mesh, layout);
-            lhs_type d(mesh, layout);
-            lhs_type s(mesh, layout);
-            lhs_type q(mesh, layout);
-
+            // Initialize Fields
+            r.updateLayout(lhs.getLayout());
+            d.updateLayout(lhs.getLayout());
+            q.updateLayout(lhs.getLayout());
+            s.updateLayout(lhs.getLayout());
+            // Initilaize Fields inside the preconitioner
             preconditioner_m->init_fields(lhs);
 
             using bc_type  = BConds<lhs_type, Dim>;
@@ -502,6 +513,15 @@ namespace ippl {
 
     protected:
         std::unique_ptr<preconditioner<FieldLHS>> preconditioner_m;
+
+    private:
+        // Variable names mostly based on description in
+        // https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
+        lhs_type r;
+        lhs_type d;
+        lhs_type s;
+        lhs_type q;
+
     };
 
 };  // namespace ippl

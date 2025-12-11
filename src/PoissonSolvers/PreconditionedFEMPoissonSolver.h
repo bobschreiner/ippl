@@ -62,11 +62,12 @@ namespace ippl {
         {
             static_assert(std::is_floating_point<Tlhs>::value, "Not a floating point type");
             setDefaultParameters();
+            pcg_algo_m.initializeFields(rhs.get_mesh(), rhs.getLayout());
         }
 
         void setRhs(rhs_type& rhs) override {
             Base::setRhs(rhs);
-
+            pcg_algo_m.initializeFields(rhs.get_mesh(), rhs.getLayout());
             lagrangeSpace_m.initialize(rhs.get_mesh(), rhs.getLayout());
         }
 
@@ -115,9 +116,7 @@ namespace ippl {
 
                 field.fillHalo();
 
-                auto return_field = lagrangeSpace_m.evaluateAx(field, poissonEquationEval);
-
-                return return_field;
+                return lagrangeSpace_m.evaluateAx(field, poissonEquationEval);
             };
 
             const auto algoOperatorL = [poissonEquationEval, &bcField, this](lhs_type field) -> lhs_type {
