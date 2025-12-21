@@ -1,4 +1,5 @@
 
+#include "std_algorithms/Kokkos_MaxElement.hpp"
 namespace ippl {
 
     // LagrangeSpace constructor, which calls the FiniteElementSpace constructor,
@@ -137,9 +138,14 @@ namespace ippl {
                 }
 
                 // compute the new index in the colored view
-                size_t new_index = Kokkos::atomic_fetch_add(&color_counter(color), 1);
+                const size_t new_index = Kokkos::atomic_fetch_add(&color_counter(color), 1);
                 coloredElementIndices(color, new_index) = elementIndex;
             });
+
+        // Get the maxmium from the counter
+        const size_t max_elements_per_color = *Kokkos::Experimental::max_element(Kokkos::DefaultExecutionSpace(), color_counter);
+        // Resize coloredElementIndices to the correct size
+        Kokkos::resize(coloredElementIndices, 1<<Dim, max_elements_per_color);
     }
 
     ///////////////////////////////////////////////////////////////////////
