@@ -104,6 +104,48 @@ namespace ippl {
                     elementIndices(idx) = points(i);
                 }
             });
+
+        // Assert that the number of elements per rank is divisible by 2^Dim
+        assert(elementsPerRank % (1 << Dim) == 0 &&
+               "Number of elements per rank must be divisible by 2^Dim for coloring");
+
+        // Initialize coloredElementIndices with -1
+        coloredElementIndices = Kokkos::View<size_t***>("colored_ElementIndices", 1<<Dim, elementsPerRank, numElementDOFs);
+
+        // Reset coloredElementIndices to -1
+        Kokkos::parallel_for(
+            "Reset coloredElementIndices", coloredElementIndices.extent(0) * coloredElementIndices.extent(1),
+            KOKKOS_LAMBDA(const int index) {
+                const size_t color = index / elementsPerRank;
+                const size_t elem_index = index % elementsPerRank;
+                for (size_t dof = 0; dof < numElementDOFs; ++dof) {
+                    coloredElementIndices(color, elem_index, dof) = static_cast<size_t>(-1);
+                }
+            });
+        // Counter for color indices
+        Kokkos::View<size_t*> color_counter("color_counter" , 1<<Dim);
+
+        Kokkos::parallel_for(
+        "Color elements" , elementsPerRank, KOKKOS_LAMBDA(const int index) {
+                // get NDindices
+                const size_t elementIndex = elementIndices(index);
+                const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
+
+                // determine color by evaluating the parity of the ndinde
+                size_t color = 0;
+                for (size_t d = 0; d < Dim; ++d) {
+                    color += (elementNDIndex[d] % 2) << d ;
+                }
+
+                // compute the new index in the colored view
+                size_t new_index = Kokkos::atomic_fetch_add(&color_counter(color), 1);
+                // Add the dofs to the correct color
+                const Vector<size_t, numElementDOFs> global_dofs =
+                    this->LagrangeSpace::getGlobalDOFIndices(elementIndex);
+                for (size_t i = 0; i < numElementDOFs; ++i) {
+                    coloredElementIndices(color, new_index, i) = global_dofs[i];
+                }
+            });
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -404,7 +446,7 @@ namespace ippl {
         // Get field data and atomic result data,
         // since it will be added to during the kokkos loop
         ViewType view             = field.getView();
-        AtomicViewType resultView = resultField.getView();
+        ViewType resultView = resultField.getView();
 
         // Get boundary conditions from field
         BConds<FieldLHS, Dim>& bcField = field.getFieldBC();
@@ -423,19 +465,23 @@ namespace ippl {
         // start a timer
         IpplTimings::startTimer(evalAx_outer);
 
-        // Loop over elements to compute contributions
-        Kokkos::parallel_for(
-            "Loop over elements Ax", policy_type(0, elementIndices.extent(0)),
-            KOKKOS_CLASS_LAMBDA(const size_t index) {
-                const size_t elementIndex                        = elementIndices(index);
-                const Vector<size_t, numElementDOFs> global_dofs =
-                    this->LagrangeSpace::getGlobalDOFIndices(elementIndex);
+        // Loop over colors
+        for (size_t color = 0; color < (1 << Dim); ++color) {
+            // Loop over elements of this color to compute contributions
+            Kokkos::parallel_for(
+                "Loop over colored elements Ax", policy_type(0, coloredElementIndices.extent(1)),
+                KOKKOS_CLASS_LAMBDA(const size_t index) {
+                // Exit Kokkos lambda if this element is not assigned (due to coloring)
+                if (coloredElementIndices(color, index, 0) == static_cast<size_t>(-1)) {
+                    return;
+                }
                 Vector<indices_t, numElementDOFs> global_dof_ndindices;
 
+                // Get the global DOF n-dimensional indices for the element DOFs
                 for (size_t i = 0; i < numElementDOFs; ++i) {
-                    global_dof_ndindices[i] = this->getMeshVertexNDIndex(global_dofs[i]);
+                    global_dof_ndindices[i] = this->getMeshVertexNDIndex(
+                        coloredElementIndices(color, index, i));
                 }
-
                 // local DOF indices (both i and j go from 0 to numDOFs-1 in the element)
                 size_t i, j;
 
@@ -483,6 +529,7 @@ namespace ippl {
                     }
                 }
             });
+        }
         IpplTimings::stopTimer(evalAx_outer);
 
         // start a timer
