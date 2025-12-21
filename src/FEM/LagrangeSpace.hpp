@@ -110,7 +110,7 @@ namespace ippl {
                "Number of elements per rank must be divisible by 2^Dim for coloring");
 
         // Initialize coloredElementIndices with -1
-        coloredElementIndices = Kokkos::View<size_t***>("colored_ElementIndices", 1<<Dim, elementsPerRank, numElementDOFs);
+        coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", 1<<Dim, elementsPerRank );
 
         // Reset coloredElementIndices to -1
         Kokkos::parallel_for(
@@ -118,9 +118,8 @@ namespace ippl {
             KOKKOS_LAMBDA(const int index) {
                 const size_t color = index / elementsPerRank;
                 const size_t elem_index = index % elementsPerRank;
-                for (size_t dof = 0; dof < numElementDOFs; ++dof) {
-                    coloredElementIndices(color, elem_index, dof) = static_cast<size_t>(-1);
-                }
+                coloredElementIndices(color, elem_index) = static_cast<size_t>(-1);
+
             });
         // Counter for color indices
         Kokkos::View<size_t*> color_counter("color_counter" , 1<<Dim);
@@ -139,12 +138,7 @@ namespace ippl {
 
                 // compute the new index in the colored view
                 size_t new_index = Kokkos::atomic_fetch_add(&color_counter(color), 1);
-                // Add the dofs to the correct color
-                const Vector<size_t, numElementDOFs> global_dofs =
-                    this->LagrangeSpace::getGlobalDOFIndices(elementIndex);
-                for (size_t i = 0; i < numElementDOFs; ++i) {
-                    coloredElementIndices(color, new_index, i) = global_dofs[i];
-                }
+                coloredElementIndices(color, new_index) = elementIndex;
             });
     }
 
@@ -472,15 +466,18 @@ namespace ippl {
                 "Loop over colored elements Ax", policy_type(0, coloredElementIndices.extent(1)),
                 KOKKOS_CLASS_LAMBDA(const size_t index) {
                 // Exit Kokkos lambda if this element is not assigned (due to coloring)
-                if (coloredElementIndices(color, index, 0) == static_cast<size_t>(-1)) {
+                if (coloredElementIndices(color, index) == static_cast<size_t>(-1)) {
                     return;
                 }
+                const size_t elementIndex = coloredElementIndices(color, index);
+                Vector<size_t , numElementDOFs> global_dofs =
+                    this->LagrangeSpace::getGlobalDOFIndices(elementIndex);
                 Vector<indices_t, numElementDOFs> global_dof_ndindices;
+
 
                 // Get the global DOF n-dimensional indices for the element DOFs
                 for (size_t i = 0; i < numElementDOFs; ++i) {
-                    global_dof_ndindices[i] = this->getMeshVertexNDIndex(
-                        coloredElementIndices(color, index, i));
+                    global_dof_ndindices[i] = this->getMeshVertexNDIndex(global_dofs[i]);
                 }
                 // local DOF indices (both i and j go from 0 to numDOFs-1 in the element)
                 size_t i, j;
