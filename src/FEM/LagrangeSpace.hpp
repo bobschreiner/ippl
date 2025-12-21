@@ -106,46 +106,57 @@ namespace ippl {
                 }
             });
 
-        // Assert that the number of elements per rank is divisible by 2^Dim
-        assert(elementsPerRank % (1 << Dim) == 0 &&
-               "Number of elements per rank must be divisible by 2^Dim for coloring");
 
-        // Initialize coloredElementIndices with -1
-        coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", 1<<Dim, elementsPerRank );
+        // First pass: count elements per color
+        Kokkos::View<size_t*> color_counter("color_counter", 1<<Dim);
 
-        // Reset coloredElementIndices to -1
         Kokkos::parallel_for(
-            "Reset coloredElementIndices", coloredElementIndices.extent(0) * coloredElementIndices.extent(1),
+            "Count elements per color", elementsPerRank,
             KOKKOS_LAMBDA(const int index) {
-                const size_t color = index / elementsPerRank;
-                const size_t elem_index = index % elementsPerRank;
-                coloredElementIndices(color, elem_index) = static_cast<size_t>(-1);
-
-            });
-        // Counter for color indices
-        Kokkos::View<size_t*> color_counter("color_counter" , 1<<Dim);
-
-        Kokkos::parallel_for(
-        "Color elements" , elementsPerRank, KOKKOS_LAMBDA(const int index) {
-                // get NDindices
                 const size_t elementIndex = elementIndices(index);
                 const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
 
-                // determine color by evaluating the parity of the ndinde
                 size_t color = 0;
                 for (size_t d = 0; d < Dim; ++d) {
-                    color += (elementNDIndex[d] % 2) << d ;
+                    color += (elementNDIndex[d] % 2) << d;
+                }
+                Kokkos::atomic_fetch_add(&color_counter(color), 1);
+            });
+
+        const size_t max_elements_per_color =
+            *Kokkos::Experimental::max_element(Kokkos::DefaultExecutionSpace(), color_counter);
+
+        // Now allocate with correct size
+        coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", 1<<Dim, max_elements_per_color);
+
+        // Reset counter for second pass
+        Kokkos::parallel_for("Reset counter", 1<<Dim,
+            KOKKOS_LAMBDA(const int i) { color_counter(i) = 0; });
+
+        Kokkos::parallel_for(
+            "Assign colored elements", elementsPerRank,
+            KOKKOS_LAMBDA(const int index) {
+                const size_t elementIndex = elementIndices(index);
+                const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
+
+                size_t color = 0;
+                for (size_t d = 0; d < Dim; ++d) {
+                    color += (elementNDIndex[d] % 2) << d;
                 }
 
-                // compute the new index in the colored view
                 const size_t new_index = Kokkos::atomic_fetch_add(&color_counter(color), 1);
                 coloredElementIndices(color, new_index) = elementIndex;
             });
 
-        // Get the maxmium from the counter
-        const size_t max_elements_per_color = *Kokkos::Experimental::max_element(Kokkos::DefaultExecutionSpace(), color_counter);
-        // Resize coloredElementIndices to the correct size
-        Kokkos::resize(coloredElementIndices, 1<<Dim, max_elements_per_color);
+        // fill the remaining entries with invalid element index
+        Kokkos::parallel_for(
+            "Fill remaining colored elements", 1<<Dim,
+            KOKKOS_LAMBDA(const int color) {
+            size_t count = color_counter(color);
+            for (size_t index = count; index < max_elements_per_color; ++index) {
+                coloredElementIndices(color, index) = std::numeric_limits<size_t>::max();
+            }
+        });
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -472,7 +483,7 @@ namespace ippl {
                 "Loop over colored elements Ax", policy_type(0, coloredElementIndices.extent(1)),
                 KOKKOS_CLASS_LAMBDA(const size_t index) {
                 // Exit Kokkos lambda if this element is not assigned (due to coloring)
-                if (coloredElementIndices(color, index) == static_cast<size_t>(-1)) {
+                if (coloredElementIndices(color, index) == std::numeric_limits<size_t>::max()) {
                     return;
                 }
                 const size_t elementIndex = coloredElementIndices(color, index);
