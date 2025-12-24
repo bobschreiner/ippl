@@ -108,7 +108,8 @@ namespace ippl {
 
 
         // First pass: count elements per color
-        Kokkos::View<size_t*> color_counter("color_counter", 1<<Dim);
+        const size_t ncolors = 1 << Dim;
+        Kokkos::View<size_t*> color_counter("color_counter", ncolors);
 
         Kokkos::parallel_for(
             "Count elements per color", elementsPerRank,
@@ -116,6 +117,7 @@ namespace ippl {
                 const size_t elementIndex = elementIndices(index);
                 const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
 
+                // Determine color based on parity of ND indices
                 size_t color = 0;
                 for (size_t d = 0; d < Dim; ++d) {
                     color += (elementNDIndex[d] % 2) << d;
@@ -123,15 +125,24 @@ namespace ippl {
                 Kokkos::atomic_fetch_add(&color_counter(color), 1);
             });
 
-        const size_t max_elements_per_color =
-            *Kokkos::Experimental::max_element(Kokkos::DefaultExecutionSpace(), color_counter);
+        // Step 2: find max elements per color
+        size_t max_elements_per_color = 0;
+        size_t count = 0;
+
+        for (size_t color = 0; color < ncolors; ++color) {
+            count = color_counter(color);
+            if (count > max_elements_per_color) {
+                max_elements_per_color = count;
+            }
+        }
 
         // Now allocate with correct size
-        coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", 1<<Dim, max_elements_per_color);
+        coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", ncolors, max_elements_per_color);
 
         // Reset counter for second pass
-        Kokkos::parallel_for("Reset counter", 1<<Dim,
-            KOKKOS_LAMBDA(const int i) { color_counter(i) = 0; });
+        for (size_t color = 0; color < ncolors; ++color) {
+            color_counter(color) = 0;
+        }
 
         Kokkos::parallel_for(
             "Assign colored elements", elementsPerRank,
@@ -150,7 +161,7 @@ namespace ippl {
 
         // fill the remaining entries with invalid element index
         Kokkos::parallel_for(
-            "Fill remaining colored elements", 1<<Dim,
+            "Fill remaining colored elements", ncolors,
             KOKKOS_LAMBDA(const int color) {
             size_t count = color_counter(color);
             for (size_t index = count; index < max_elements_per_color; ++index) {
