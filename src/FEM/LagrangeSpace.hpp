@@ -116,7 +116,7 @@ namespace ippl {
 
         Kokkos::parallel_for(
             "Count elements per color", elementsPerRank,
-            KOKKOS_LAMBDA(const int index) {
+            KOKKOS_CLASS_LAMBDA(const int index) {
                 const size_t elementIndex = elementIndices(index);
                 const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
 
@@ -150,7 +150,7 @@ namespace ippl {
         // Second pass: assign elements to colors
         Kokkos::parallel_for(
             "Assign colored elements", elementsPerRank,
-            KOKKOS_LAMBDA(const int index) {
+            KOKKOS_CLASS_LAMBDA(const int index) {
                 const size_t elementIndex = elementIndices(index);
                 const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
 
