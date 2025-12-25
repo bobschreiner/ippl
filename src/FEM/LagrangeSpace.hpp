@@ -109,11 +109,12 @@ namespace ippl {
 
         const size_t ncolors = 1 << Dim;
         this->color_counter = Kokkos::View<size_t*>("color_counter", ncolors);
-        this->coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", ncolors, elementsPerRank);
+        this->coloredElementIndices = Kokkos::View<size_t**>(
+        "colored_ElementIndices",
+        ncolors,
+        elementsPerRank);
 
-        Kokkos::parallel_for(
-            "Count elements per color", elementsPerRank,
-            KOKKOS_CLASS_LAMBDA(const int index) {
+        for (size_t index = 0 ; index < elementsPerRank ; ++index) {
                 const size_t elementIndex = elementIndices(index);
                 const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
 
@@ -122,9 +123,10 @@ namespace ippl {
                 for (size_t d = 0; d < Dim; ++d) {
                     color += (elementNDIndex[d] % 2) << d;
                 }
-                size_t newIndex = Kokkos::atomic_fetch_add(&this->color_counter(color), 1);
+                const size_t newIndex = this->color_counter(color);
+                ++this->color_counter(color);
                 this->coloredElementIndices(color , newIndex) = elementIndex;
-       });
+       }
     }
 
         // Step 2: find max elements per color
