@@ -108,6 +108,8 @@ namespace ippl {
         Kokkos::fence();
 
 
+        // Now we color the elements based on the parity of their ND indices
+        // TODO: This currently only works on CPU, illegal memory access on GPU
         const size_t ncolors = 1 << Dim;
         this->color_counter = Kokkos::View<size_t*>("color_counter", ncolors);
         this->coloredElementIndices = Kokkos::View<size_t**>(
@@ -116,7 +118,7 @@ namespace ippl {
         elementsPerRank);
 
         Kokkos::parallel_for("Coloring elements" , elementsPerRank, KOKKOS_CLASS_LAMBDA(const int index) {
-                const size_t elementIndex = elementIndices(index);
+                const size_t elementIndex = this->elementIndices(index);
                 const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
 
                 // Determine color based on parity of ND indices
@@ -128,53 +130,6 @@ namespace ippl {
                 this->coloredElementIndices(color , newIndex) = elementIndex;
        });
     }
-
-        // Step 2: find max elements per color
-        /*
-        size_t max_elements_per_color = 0;
-        size_t count = 0;
-
-        for (size_t color = 0; color < ncolors; ++color) {
-            count = color_counter(color);
-            if (count > max_elements_per_color) {
-                max_elements_per_color = count;
-            }
-        }
-
-        // Now allocate with correct size
-        coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", ncolors, max_elements_per_color);
-
-        // Reset counter for second pass
-        for (size_t color = 0; color < ncolors; ++color) {
-            color_counter(color) = 0;
-        }
-
-        // Second pass: assign elements to colors
-        Kokkos::parallel_for(
-            "Assign colored elements", elementsPerRank,
-            KOKKOS_CLASS_LAMBDA(const int index) {
-                const size_t elementIndex = elementIndices(index);
-                const indices_t elementNDIndex = this->getElementNDIndex(elementIndex);
-
-                size_t color = 0;
-                for (size_t d = 0; d < Dim; ++d) {
-                    color += (elementNDIndex[d] % 2) << d;
-                }
-
-                size_t new_index = Kokkos::atomic_fetch_add(&color_counter(color), 1);
-                coloredElementIndices(color, new_index) = elementIndex;
-            });
-
-        // fill the remaining entries with invalid element index
-        size_t local_count = 0;
-        for (size_t color = 0; color < ncolors; ++color) {
-            local_count = color_counter(color);
-            for (size_t index = local_count; index < max_elements_per_color; ++index) {
-                coloredElementIndices(color, index) = std::numeric_limits<size_t>::max();
-            }
-        }
-    }
-    */
 
     ///////////////////////////////////////////////////////////////////////
     /// Degree of Freedom operations //////////////////////////////////////
