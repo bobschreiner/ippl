@@ -107,12 +107,9 @@ namespace ippl {
             });
 
 
-        // First pass: count elements per color
         const size_t ncolors = 1 << Dim;
-        Kokkos::View<size_t*> color_counter("color_counter", ncolors);
-        for (size_t color = 0; color < ncolors; ++color) {
-            color_counter(color) = 0;
-        }
+        this->color_counter = Kokkos::View<size_t*>("color_counter", ncolors);
+        this->coloredElementIndices = Kokkos::View<size_t**>("colored_ElementIndices", ncolors, elementsPerRank);
 
         Kokkos::parallel_for(
             "Count elements per color", elementsPerRank,
@@ -125,10 +122,13 @@ namespace ippl {
                 for (size_t d = 0; d < Dim; ++d) {
                     color += (elementNDIndex[d] % 2) << d;
                 }
-                Kokkos::atomic_fetch_add(&color_counter(color), 1);
-            });
+                size_t newIndex = Kokkos::atomic_fetch_add(&this->color_counter(color), 1);
+                this->coloredElementIndices(color , newIndex) = elementIndex;
+       });
+    }
 
         // Step 2: find max elements per color
+        /*
         size_t max_elements_per_color = 0;
         size_t count = 0;
 
@@ -172,6 +172,7 @@ namespace ippl {
             }
         }
     }
+    */
 
     ///////////////////////////////////////////////////////////////////////
     /// Degree of Freedom operations //////////////////////////////////////
@@ -492,14 +493,12 @@ namespace ippl {
 
         // Loop over colors
         for (size_t color = 0; color < (1 << Dim); ++color) {
-            // Loop over elements of this color to compute contributions
+            // Loop over elements of this color to compute contribution
+            const int num_elements_in_color = this->color_counter(color);
             Kokkos::parallel_for(
-                "Loop over colored elements Ax", policy_type(0, coloredElementIndices.extent(1)),
+                "Loop over colored elements Ax", policy_type(0, num_elements_in_color),
                 KOKKOS_CLASS_LAMBDA(const size_t index) {
-                // Exit Kokkos lambda if this element is not assigned (due to coloring)
-                if (coloredElementIndices(color, index) == std::numeric_limits<size_t>::max()) {
-                    return;
-                }
+
                 const size_t elementIndex = coloredElementIndices(color, index);
                 Vector<size_t , numElementDOFs> global_dofs =
                     this->LagrangeSpace::getGlobalDOFIndices(elementIndex);

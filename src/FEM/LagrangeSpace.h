@@ -325,6 +325,7 @@ namespace ippl {
         /// my MPI rank. //////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////
         Kokkos::View<size_t*> elementIndices;
+        Kokkos::View<size_t*> color_counter;
         Kokkos::View<size_t**> coloredElementIndices;
 
         // One time allocated field of type FieldLHS to store results
